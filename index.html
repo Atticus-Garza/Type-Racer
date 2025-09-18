@@ -4,22 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Type Racer</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
         <h1>Type Racer</h1>
-        <div class="race-track"></div>
+        <button id="start-btn">Start Race</button>
+        <div class="race-track">
+            <!-- Racer elements will be dynamically added here -->
+        </div>
         <div class="game-display">
             <div id="game-text"></div>
-            <input type="text" id="typing-input" autofocus>
-            <p id="feedback"></p>
+            <input type="text" id="typing-input" placeholder="Type here..." disabled>
+            <div id="feedback"></div>
         </div>
-        <div id="status-area"></div>
+        <div class="status">
+            <p>WPM: <span id="wpm-display">0</span></p>
+            <p>Accuracy: <span id="accuracy-display">100%</span></p>
+        </div>
     </div>
-    
-    <script src="src/game.js"></script>
-    <script src="src/ai.js"></script>
-    <script src="src/main.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
