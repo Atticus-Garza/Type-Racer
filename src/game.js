@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameActive = false;
     let startTime;
     let botRacers = [];
+    let playerLastWPM = localStorage.getItem('lastWPM') || 0;
 
     const player = {
         progress: 0,
@@ -30,22 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
         element: document.createElement('div')
     };
 
-    const botProfiles = [
-        { name: "Bot 1", wpm: 55, accuracy: 0.95, element: document.createElement('div') },
-        { name: "Bot 2", wpm: 70, accuracy: 0.98, element: document.createElement('div') },
-        { name: "Bot 3", wpm: 85, accuracy: 0.97, element: document.createElement('div') }
-    ];
-
     function setupRacers() {
-        // Clear old racers
         raceTrack.innerHTML = '';
 
-        // Setup player racer
         player.element.className = 'racer player';
         player.element.textContent = 'You';
         raceTrack.appendChild(player.element);
 
-        // Setup bot racers
+        const botProfiles = getBotProfilesByDifficulty(playerLastWPM);
         botRacers = botProfiles.map((profile, index) => {
             profile.progress = 0;
             profile.element.className = `racer bot-${index + 1}`;
@@ -53,6 +46,31 @@ document.addEventListener('DOMContentLoaded', () => {
             raceTrack.appendChild(profile.element);
             return profile;
         });
+    }
+
+    function getBotProfilesByDifficulty(playerWPM) {
+        if (playerWPM <= 30) {
+            // Easy difficulty
+            return [
+                { name: "Bot 1", wpm: 25, accuracy: 0.90, element: document.createElement('div') },
+                { name: "Bot 2", wpm: 30, accuracy: 0.92, element: document.createElement('div') },
+                { name: "Bot 3", wpm: 35, accuracy: 0.94, element: document.createElement('div') }
+            ];
+        } else if (playerWPM > 30 && playerWPM <= 50) {
+            // Medium difficulty
+            return [
+                { name: "Bot 1", wpm: 45, accuracy: 0.95, element: document.createElement('div') },
+                { name: "Bot 2", wpm: 50, accuracy: 0.97, element: document.createElement('div') },
+                { name: "Bot 3", wpm: 55, accuracy: 0.96, element: document.createElement('div') }
+            ];
+        } else {
+            // Hard difficulty
+            return [
+                { name: "Bot 1", wpm: 65, accuracy: 0.98, element: document.createElement('div') },
+                { name: "Bot 2", wpm: 80, accuracy: 0.99, element: document.createElement('div') },
+                { name: "Bot 3", wpm: 90, accuracy: 0.97, element: document.createElement('div') }
+            ];
+        }
     }
 
     function createGameText() {
@@ -64,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateGameText(input) {
         const textSpans = gameTextEl.querySelectorAll('span');
         let correctCount = 0;
-        let incorrectCount = 0;
 
         for (let i = 0; i < gameText.length; i++) {
             const charSpan = textSpans[i];
@@ -79,13 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 charSpan.classList.add('incorrect');
                 charSpan.classList.remove('correct');
-                incorrectCount++;
             }
         }
-
+        
         player.correctChars = correctCount;
         player.totalChars = input.length;
-        player.mistakes = incorrectCount;
     }
 
     function calculateWPM() {
@@ -101,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRacers(progress) {
-        const raceWidth = raceTrack.clientWidth - player.element.clientWidth - 20; // -20 for padding
+        const raceWidth = raceTrack.clientWidth - player.element.clientWidth - 20;
         const newPosition = (progress / gameText.length) * raceWidth;
         return newPosition;
     }
@@ -109,11 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBotProgress(bot, elapsed) {
         const targetCharsPerMin = bot.wpm * 5;
         const targetMsPerChar = (60 * 1000) / targetCharsPerMin;
-
-        // Calculate a character based on elapsed time, with some jitter
         const simulatedCharIndex = Math.floor(elapsed / targetMsPerChar);
 
-        // Update bot's progress, simulating typing errors based on accuracy
         if (simulatedCharIndex > bot.progress) {
             bot.progress = Math.min(simulatedCharIndex, gameText.length);
         }
@@ -124,39 +136,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const elapsedTime = Date.now() - startTime;
         
-        // Update WPM and Accuracy
         const wpm = calculateWPM();
         const accuracy = calculateAccuracy();
         wpmDisplay.textContent = wpm;
         accuracyDisplay.textContent = `${accuracy}%`;
         
-        // Update player position
         const playerInput = typingInput.value;
         player.element.style.transform = `translateX(${updateRacers(playerInput.length)}px)`;
 
-        // Update bots
         botRacers.forEach(bot => {
             updateBotProgress(bot, elapsedTime);
             bot.element.style.transform = `translateX(${updateRacers(bot.progress)}px)`;
         });
 
-        // Check for winner
         if (playerInput.length >= gameText.length) {
-            gameActive = false;
-            typingInput.disabled = true;
-            alert(`You finished! Your WPM was ${wpm} with ${accuracy}% accuracy.`);
+            endGame(wpm, accuracy, 'player');
         } else {
             botRacers.forEach(bot => {
                 if (bot.progress >= gameText.length) {
-                    gameActive = false;
-                    typingInput.disabled = true;
-                    alert(`${bot.name} won!`);
+                    endGame(wpm, accuracy, 'bot', bot.name);
                 }
             });
         }
 
         if (gameActive) {
             requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function endGame(finalWPM, finalAccuracy, winner, botName) {
+        gameActive = false;
+        typingInput.disabled = true;
+        localStorage.setItem('lastWPM', finalWPM);
+
+        if (winner === 'player') {
+            alert(`You won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
+        } else {
+            alert(`${botName} won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
         }
     }
 
@@ -174,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         player.progress = 0;
         player.correctChars = 0;
         player.totalChars = 0;
-        player.mistakes = 0;
         wpmDisplay.textContent = '0';
         accuracyDisplay.textContent = '100%';
 
