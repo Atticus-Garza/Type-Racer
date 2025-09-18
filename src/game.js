@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wpmDisplay = document.getElementById('wpm-display');
     const accuracyDisplay = document.getElementById('accuracy-display');
     const raceTrack = document.querySelector('.race-track');
+    const gameContainer = document.querySelector('.game-container'); // Add this line
 
     const sentences = [
         "The quick brown fox jumps over the lazy dog.",
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         raceTrack.innerHTML = '';
 
         player.element.className = 'racer player';
-        player.element.textContent = 'You';
+        player.element.textContent = 'YOU';
         raceTrack.appendChild(player.element);
 
         const botProfiles = getBotProfilesByDifficulty(playerLastWPM);
@@ -50,25 +51,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getBotProfilesByDifficulty(playerWPM) {
         if (playerWPM <= 30) {
-            // Easy difficulty
             return [
-                { name: "Bot 1", wpm: 25, accuracy: 0.90, element: document.createElement('div') },
-                { name: "Bot 2", wpm: 30, accuracy: 0.92, element: document.createElement('div') },
-                { name: "Bot 3", wpm: 35, accuracy: 0.94, element: document.createElement('div') }
+                { name: "BOT 1", wpm: 25, accuracy: 0.90, element: document.createElement('div') },
+                { name: "BOT 2", wpm: 30, accuracy: 0.92, element: document.createElement('div') },
+                { name: "BOT 3", wpm: 35, accuracy: 0.94, element: document.createElement('div') }
             ];
         } else if (playerWPM > 30 && playerWPM <= 50) {
-            // Medium difficulty
             return [
-                { name: "Bot 1", wpm: 45, accuracy: 0.95, element: document.createElement('div') },
-                { name: "Bot 2", wpm: 50, accuracy: 0.97, element: document.createElement('div') },
-                { name: "Bot 3", wpm: 55, accuracy: 0.96, element: document.createElement('div') }
+                { name: "BOT 1", wpm: 45, accuracy: 0.95, element: document.createElement('div') },
+                { name: "BOT 2", wpm: 50, accuracy: 0.97, element: document.createElement('div') },
+                { name: "BOT 3", wpm: 55, accuracy: 0.96, element: document.createElement('div') }
             ];
         } else {
-            // Hard difficulty
             return [
-                { name: "Bot 1", wpm: 65, accuracy: 0.98, element: document.createElement('div') },
-                { name: "Bot 2", wpm: 80, accuracy: 0.99, element: document.createElement('div') },
-                { name: "Bot 3", wpm: 90, accuracy: 0.97, element: document.createElement('div') }
+                { name: "BOT 1", wpm: 65, accuracy: 0.98, element: document.createElement('div') },
+                { name: "BOT 2", wpm: 80, accuracy: 0.99, element: document.createElement('div') },
+                { name: "BOT 3", wpm: 90, accuracy: 0.97, element: document.createElement('div') }
             ];
         }
     }
@@ -174,10 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert(`${botName} won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
         }
+        
+        gameContainer.dataset.mode = 'idle';
     }
 
     function startRace() {
         if (gameActive) return;
+        gameContainer.dataset.mode = 'playing';
         gameActive = true;
         startTime = Date.now();
         typingInput.value = '';
