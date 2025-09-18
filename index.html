@@ -7,21 +7,43 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <h1>Type Racer</h1>
-        <button id="start-btn">Start Race</button>
-        <div class="race-track">
-            <!-- Racer elements will be dynamically added here -->
-        </div>
-        <div class="game-display">
-            <div id="game-text"></div>
-            <input type="text" id="typing-input" placeholder="Type here..." disabled>
-            <div id="feedback"></div>
-        </div>
-        <div class="status">
-            <p>WPM: <span id="wpm-display">0</span></p>
-            <p>Accuracy: <span id="accuracy-display">100%</span></p>
-        </div>
+    <div class="game-container" data-mode="idle">
+        <header class="header">
+            <h1 class="logo">Type <span class="glow">Racer</span> AI</h1>
+        </header>
+
+        <main class="main-content">
+            <div class="center-content">
+                <div class="intro-screen">
+                    <p>Welcome to the ultimate typing showdown!</p>
+                    <button id="start-btn" class="animated-btn">
+                        <span class="btn-text">Start Race</span>
+                        <div class="border-glow"></div>
+                    </button>
+                </div>
+
+                <div class="game-screen">
+                    <div class="race-track">
+                        <!-- Racer elements will be dynamically added here -->
+                    </div>
+                    <div class="game-display">
+                        <div id="game-text"></div>
+                        <input type="text" id="typing-input" placeholder="Type here to begin..." disabled>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-stats">
+            <div class="stat-box">
+                <span class="stat-label">WPM</span>
+                <span id="wpm-display" class="stat-value">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Accuracy</span>
+                <span id="accuracy-display" class="stat-value">100%</span>
+            </div>
+        </footer>
     </div>
     <script src="game.js"></script>
 </body>
