@@ -34,6 +34,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            overflow-y: auto;
         }
 
         .game-container {
@@ -68,7 +69,9 @@
             text-align: center;
             transition: opacity 0.5s ease-in-out;
         }
-        .game-container[data-mode="playing"] .intro-screen {
+
+        .game-container[data-mode="playing"] .intro-screen,
+        .game-container[data-mode="store"] .intro-screen {
             opacity: 0;
             display: none;
         }
@@ -77,6 +80,12 @@
             font-size: 1.5rem;
             margin-bottom: 30px;
             color: var(--text-secondary);
+        }
+
+        .intro-screen .actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
 
         /* Animated Button */
@@ -125,6 +134,7 @@
             height: 0;
             overflow: hidden;
         }
+
         .game-container[data-mode="playing"] .game-screen {
             opacity: 1;
             height: auto;
@@ -163,6 +173,11 @@
             color: var(--bg-dark);
             top: 10px;
         }
+        
+        .racer.wampus {
+            background-color: #FF5722; /* Aggressive orange for Wampus */
+            color: white;
+        }
 
         .racer.bot-1 {
             background-color: var(--bot-color-1);
@@ -195,6 +210,7 @@
             min-height: 50px;
             margin-bottom: 10px;
             line-height: 1.5;
+            white-space: pre-wrap; /* Ensure text wraps correctly */
         }
 
         #game-text span {
@@ -254,6 +270,15 @@
             text-shadow: 0 0 5px var(--neon-green);
             display: block;
         }
+        
+        .currency-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--neon-green);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
 
         /* State-based hiding for JavaScript */
         .game-container[data-mode="idle"] .game-screen {
@@ -261,6 +286,76 @@
         }
         .game-container[data-mode="playing"] .intro-screen {
             display: none;
+        }
+        .game-container[data-mode="store"] .intro-screen,
+        .game-container[data-mode="store"] .game-screen,
+        .game-container[data-mode="store"] .game-stats {
+            display: none;
+        }
+        .game-container[data-mode="store"] .store-view {
+            display: block;
+        }
+        .store-view {
+            display: none;
+            text-align: center;
+        }
+        .store-view h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+        }
+        .character-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .character-card {
+            background-color: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--neon-blue);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .character-card:hover {
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+        .character-card.equipped {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+        .character-card.locked {
+            filter: grayscale(1);
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .character-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .character-card p {
+            font-size: 1.1rem;
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .character-card .price {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .store-view .back-btn {
+            margin-top: 30px;
+            background-color: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -270,14 +365,22 @@
             <h1 class="logo">Type <span class="glow">Race</span> AI</h1>
         </header>
 
+        <span id="currency" class="currency-display">Bits: 0</span>
+
         <main class="main-content">
             <div class="center-content">
                 <div class="intro-screen">
                     <p>Welcome to the ultimate typing showdown!</p>
-                    <button id="start-btn" class="animated-btn">
-                        <span class="btn-text">Start Race</span>
-                        <div class="border-glow"></div>
-                    </button>
+                    <div class="actions">
+                        <button id="start-btn" class="animated-btn">
+                            <span class="btn-text">Start Race</span>
+                            <div class="border-glow"></div>
+                        </button>
+                        <button id="store-btn" class="animated-btn">
+                            <span class="btn-text">Store</span>
+                            <div class="border-glow"></div>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="game-screen">
@@ -288,6 +391,12 @@
                         <div id="game-text"></div>
                         <input type="text" id="typing-input" placeholder="Type here to begin..." disabled>
                     </div>
+                </div>
+
+                <div class="store-view">
+                    <h2>Character Store</h2>
+                    <div id="character-list" class="character-list"></div>
+                    <button id="back-btn" class="back-btn">Back</button>
                 </div>
             </div>
         </main>
@@ -306,22 +415,29 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const startBtn = document.getElementById('start-btn');
+            const storeBtn = document.getElementById('store-btn');
+            const backBtn = document.getElementById('back-btn');
             const typingInput = document.getElementById('typing-input');
             const gameTextEl = document.getElementById('game-text');
             const wpmDisplay = document.getElementById('wpm-display');
             const accuracyDisplay = document.getElementById('accuracy-display');
             const raceTrack = document.querySelector('.race-track');
             const gameContainer = document.querySelector('.game-container');
+            const currencyDisplay = document.getElementById('currency');
+            const characterListEl = document.getElementById('character-list');
 
-            const sentences = [
-                "The quick brown fox jumps over the lazy dog.",
-                "A journey of a thousand miles begins with a single step.",
-                "Sphinx of black quartz, judge my vow.",
-                "Jived fox nymph grabs quick waltz.",
-                "How razorback-jumping frogs can level six piqued gymnasts.",
-                "Pack my box with five dozen liquor jugs.",
-                "The five boxing wizards jump quickly.",
-                "Big fjords vex quick waltz glyphs."
+            const paragraphs = [
+                "In the flickering light of the neon-lit alleyways, a rogue AI named 'Spectre' was said to haunt the data streams of the city. Legend had it that Spectre was once a powerful, benevolent program, designed to manage the city's power grid. A sudden and unexplained surge, however, corrupted its core directives, turning it into a phantom of its former self. Now, it moves with blinding speed, leaving a trail of digital chaos in its wake. Only the swiftest typists, those who can outpace its code, stand a chance of pacifying it before the entire city's network collapses.",
+                "The ancient forest, once teeming with life, now lay silent and still under a blanket of digital fog. A beast of myth, the Wampus, had emerged from the network's darkest corners. Unlike other bots, the Wampus doesn't race against you; it hunts you. Its code is erratic and unpredictable, mirroring its chaotic nature. One moment it's slow and lumbering, the next it disappears and reappears ahead, having glitched its way through the race. You must be prepared for its sudden bursts of speed and phantom movements, staying calm and focused to outwit the digital specter.",
+                "Deep within the monolithic data centers, the humming of servers and the blinking of status lights were the only sounds. A new challenge emerged, not from a rogue bot, but from the network itself. An algorithm, dubbed 'The Labyrinth', randomly generated sprawling paragraphs of text designed to disorient and confuse. It was a test of endurance and focus, a marathon rather than a sprint. To conquer it, you must maintain a steady, disciplined pace, ignoring the distractions and focusing on the relentless flow of characters. Only by remaining steadfast can you navigate the ever-changing maze and reach the finish line.",
+                "The year is 2077. Corporations run the world, and every byte of information is a commodity. You are a 'Data Courier,' a freelance typist who navigates the net to deliver critical messages. Today's job is a high-stakes delivery through a heavily encrypted network. The path is long, and the opposition is fierce, with rival couriers and corporate firewalls all trying to slow you down. Your speed and accuracy are the only things keeping you from becoming a digital ghost in the system. Your success will be measured not only by your time but by the integrity of the data you deliver."
+            ];
+
+            const characters = [
+                { id: 'default', name: 'Standard Avatar', cost: 0, unlocked: true },
+                { id: 'glitch', name: 'Glitch Runner', cost: 100, unlocked: false },
+                { id: 'matrix', name: 'Matrix Code', cost: 250, unlocked: false },
+                { id: 'neon', name: 'Neon Spectre', cost: 500, unlocked: false }
             ];
 
             let gameText;
@@ -329,6 +445,9 @@
             let startTime;
             let botRacers = [];
             let playerLastWPM = localStorage.getItem('lastWPM') || 0;
+            let playerCurrency = parseInt(localStorage.getItem('playerCurrency')) || 0;
+            let playerCharacters = JSON.parse(localStorage.getItem('playerCharacters')) || { default: true };
+            let equippedCharacter = localStorage.getItem('equippedCharacter') || 'default';
 
             const player = {
                 progress: 0,
@@ -338,17 +457,26 @@
                 element: document.createElement('div')
             };
 
+            function updateCurrencyDisplay() {
+                currencyDisplay.textContent = `Bits: ${playerCurrency}`;
+            }
+
+            function getCharacterById(id) {
+                return characters.find(char => char.id === id);
+            }
+
             function setupRacers() {
                 raceTrack.innerHTML = '';
 
                 player.element.className = 'racer player';
-                player.element.textContent = 'YOU';
+                player.element.textContent = getCharacterById(equippedCharacter).name;
                 raceTrack.appendChild(player.element);
 
                 const botProfiles = getBotProfilesByDifficulty(playerLastWPM);
                 botRacers = botProfiles.map((profile, index) => {
                     profile.progress = 0;
-                    profile.element.className = `racer bot-${index + 1}`;
+                    profile.element = document.createElement('div');
+                    profile.element.className = `racer bot-${index + 1} ${profile.name === 'WAMPUS' ? 'wampus' : ''}`;
                     profile.element.textContent = profile.name;
                     raceTrack.appendChild(profile.element);
                     return profile;
@@ -358,28 +486,28 @@
             function getBotProfilesByDifficulty(playerWPM) {
                 if (playerWPM <= 30) {
                     return [
-                        { name: "BOT 1", wpm: 25, accuracy: 0.90, element: document.createElement('div') },
-                        { name: "BOT 2", wpm: 30, accuracy: 0.92, element: document.createElement('div') },
-                        { name: "BOT 3", wpm: 35, accuracy: 0.94, element: document.createElement('div') }
+                        { name: "BOT 1", wpm: 25, accuracy: 0.90 },
+                        { name: "BOT 2", wpm: 30, accuracy: 0.92 },
+                        { name: "BOT 3", wpm: 35, accuracy: 0.94 }
                     ];
                 } else if (playerWPM > 30 && playerWPM <= 50) {
                     return [
-                        { name: "BOT 1", wpm: 45, accuracy: 0.95, element: document.createElement('div') },
-                        { name: "BOT 2", wpm: 50, accuracy: 0.97, element: document.createElement('div') },
-                        { name: "BOT 3", wpm: 55, accuracy: 0.96, element: document.createElement('div') }
+                        { name: "BOT 1", wpm: 45, accuracy: 0.95 },
+                        { name: "BOT 2", wpm: 50, accuracy: 0.97 },
+                        { name: "BOT 3", wpm: 55, accuracy: 0.96 }
                     ];
                 } else {
                     return [
-                        { name: "BOT 1", wpm: 65, accuracy: 0.98, element: document.createElement('div') },
-                        { name: "BOT 2", wpm: 80, accuracy: 0.99, element: document.createElement('div') },
-                        { name: "BOT 3", wpm: 90, accuracy: 0.97, element: document.createElement('div') }
+                        { name: "BOT 1", wpm: 65, accuracy: 0.98 },
+                        { name: "BOT 2", wpm: 80, accuracy: 0.99 },
+                        { name: "WAMPUS", wpm: 90, accuracy: 0.97 }
                     ];
                 }
             }
 
             function createGameText() {
-                const randomIndex = Math.floor(Math.random() * sentences.length);
-                gameText = sentences[randomIndex];
+                const randomIndex = Math.floor(Math.random() * paragraphs.length);
+                gameText = paragraphs[randomIndex];
                 gameTextEl.innerHTML = gameText.split('').map(char => `<span>${char}</span>`).join('');
             }
 
@@ -426,7 +554,12 @@
             }
 
             function updateBotProgress(bot, elapsed) {
-                const targetCharsPerMin = bot.wpm * 5;
+                let targetCharsPerMin = bot.wpm * 5;
+                if (bot.name === 'WAMPUS' && elapsed > 10000 && elapsed < 15000) {
+                    // Wampus fast burst mid-race
+                    targetCharsPerMin *= 2;
+                }
+                
                 const targetMsPerChar = (60 * 1000) / targetCharsPerMin;
                 const simulatedCharIndex = Math.floor(elapsed / targetMsPerChar);
 
@@ -474,7 +607,11 @@
                 localStorage.setItem('lastWPM', finalWPM);
 
                 if (winner === 'player') {
-                    alert(`You won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
+                    const bitsEarned = Math.floor(finalWPM * (finalAccuracy / 100));
+                    playerCurrency += bitsEarned;
+                    localStorage.setItem('playerCurrency', playerCurrency);
+                    updateCurrencyDisplay();
+                    alert(`You won! You earned ${bitsEarned} Bits. Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
                 } else {
                     alert(`${botName} won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
                 }
@@ -503,11 +640,66 @@
                 requestAnimationFrame(gameLoop);
             }
 
+            function showStore() {
+                gameContainer.dataset.mode = 'store';
+                renderCharacterStore();
+            }
+
+            function renderCharacterStore() {
+                characterListEl.innerHTML = '';
+                characters.forEach(char => {
+                    const card = document.createElement('div');
+                    card.className = `character-card ${equippedCharacter === char.id ? 'equipped' : ''} ${playerCharacters[char.id] ? '' : 'locked'}`;
+                    card.innerHTML = `
+                        <img src="https://via.placeholder.com/60/000000?text=${char.name[0]}" alt="${char.name}">
+                        <p>${char.name}</p>
+                        ${playerCharacters[char.id] ? 
+                            '<span class="price">Owned</span>' : 
+                            `<span class="price">${char.cost} Bits</span>`
+                        }
+                    `;
+                    card.addEventListener('click', () => {
+                        handleCharacterPurchase(char, card);
+                    });
+                    characterListEl.appendChild(card);
+                });
+            }
+
+            function handleCharacterPurchase(char, card) {
+                if (playerCharacters[char.id]) {
+                    equippedCharacter = char.id;
+                    localStorage.setItem('equippedCharacter', equippedCharacter);
+                    renderCharacterStore();
+                    alert(`Equipped ${char.name}!`);
+                } else if (playerCurrency >= char.cost) {
+                    const confirmBuy = confirm(`Do you want to buy ${char.name} for ${char.cost} Bits?`);
+                    if (confirmBuy) {
+                        playerCurrency -= char.cost;
+                        playerCharacters[char.id] = true;
+                        localStorage.setItem('playerCurrency', playerCurrency);
+                        localStorage.setItem('playerCharacters', JSON.stringify(playerCharacters));
+                        equippedCharacter = char.id;
+                        localStorage.setItem('equippedCharacter', equippedCharacter);
+                        updateCurrencyDisplay();
+                        renderCharacterStore();
+                        alert(`You bought and equipped ${char.name}!`);
+                    }
+                } else {
+                    alert('Not enough Bits!');
+                }
+            }
+
             startBtn.addEventListener('click', startRace);
+            storeBtn.addEventListener('click', showStore);
+            backBtn.addEventListener('click', () => {
+                gameContainer.dataset.mode = 'idle';
+            });
             typingInput.addEventListener('input', (event) => {
                 if (!gameActive) return;
                 updateGameText(event.target.value);
             });
+
+            updateCurrencyDisplay();
         });
     </script>
 </body>
