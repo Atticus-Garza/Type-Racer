@@ -3,13 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Type Racer</title>
-    <link rel="stylesheet" href="style.css">
+    <title>AI Typing Race</title>
+    <style>
+        /* Custom Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono&display=swap');
+
+        /* Root Colors */
+        :root {
+            --bg-dark: #121212;
+            --bg-medium: #1f1f1f;
+            --bg-light: #2c2c2c;
+            --neon-blue: #00e5ff;
+            --neon-purple: #ff00e5;
+            --neon-green: #00ff66;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --player-color: var(--neon-green);
+            --bot-color-1: var(--neon-blue);
+            --bot-color-2: var(--neon-purple);
+            --track-line: #444;
+        }
+
+        /* Base Styles */
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 900px;
+            background-color: var(--bg-medium);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--neon-blue);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--text-primary);
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        .glow {
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+        }
+
+        /* Intro Screen */
+        .intro-screen {
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .game-container[data-mode="playing"] .intro-screen {
+            opacity: 0;
+            display: none;
+        }
+
+        .intro-screen p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+        }
+
+        /* Animated Button */
+        .animated-btn {
+            position: relative;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            background-color: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            border-radius: 5px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .animated-btn:hover {
+            color: var(--bg-dark);
+            background-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+        }
+
+        .animated-btn .border-glow {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+            box-shadow: inset 0 0 10px var(--neon-blue), 0 0 10px var(--neon-blue);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .animated-btn:hover .border-glow {
+            opacity: 1;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        .game-container[data-mode="playing"] .game-screen {
+            opacity: 1;
+            height: auto;
+            overflow: visible;
+        }
+
+        .race-track {
+            width: 100%;
+            height: 150px;
+            background-color: var(--bg-light);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+        }
+
+        .racer {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            left: 10px;
+            transition: transform 0.1s linear;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .racer.player {
+            background-color: var(--player-color);
+            color: var(--bg-dark);
+            top: 10px;
+        }
+
+        .racer.bot-1 {
+            background-color: var(--bot-color-1);
+            color: var(--bg-dark);
+            top: 50px;
+        }
+
+        .racer.bot-2 {
+            background-color: var(--bot-color-2);
+            color: var(--bg-dark);
+            top: 90px;
+        }
+
+        .racer.bot-3 {
+            background-color: var(--neon-blue);
+            color: var(--bg-dark);
+            top: 130px;
+        }
+
+        .game-display {
+            text-align: left;
+        }
+
+        #game-text {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.2rem;
+            padding: 15px;
+            background-color: var(--bg-light);
+            border-radius: 8px;
+            min-height: 50px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        #game-text span {
+            transition: all 0.2s;
+            border-bottom: 1px solid transparent;
+        }
+
+        #game-text .correct {
+            color: var(--neon-green);
+        }
+
+        #game-text .incorrect {
+            color: var(--neon-purple);
+            border-bottom: 1px solid var(--neon-purple);
+        }
+
+        #typing-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid var(--bg-light);
+            border-radius: 5px;
+            background-color: var(--bg-medium);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #typing-input:focus {
+            border-color: var(--neon-blue);
+        }
+
+        /* Game Stats */
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--bg-light);
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            display: block;
+        }
+
+        /* State-based hiding for JavaScript */
+        .game-container[data-mode="idle"] .game-screen {
+            display: none;
+        }
+        .game-container[data-mode="playing"] .intro-screen {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="game-container" data-mode="idle">
         <header class="header">
-            <h1 class="logo">Type <span class="glow">Racer</span> AI</h1>
+            <h1 class="logo">Type <span class="glow">Race</span> AI</h1>
         </header>
 
         <main class="main-content">
@@ -45,6 +303,212 @@
             </div>
         </footer>
     </div>
-    <script src="game.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            const typingInput = document.getElementById('typing-input');
+            const gameTextEl = document.getElementById('game-text');
+            const wpmDisplay = document.getElementById('wpm-display');
+            const accuracyDisplay = document.getElementById('accuracy-display');
+            const raceTrack = document.querySelector('.race-track');
+            const gameContainer = document.querySelector('.game-container');
+
+            const sentences = [
+                "The quick brown fox jumps over the lazy dog.",
+                "A journey of a thousand miles begins with a single step.",
+                "Sphinx of black quartz, judge my vow.",
+                "Jived fox nymph grabs quick waltz.",
+                "How razorback-jumping frogs can level six piqued gymnasts.",
+                "Pack my box with five dozen liquor jugs.",
+                "The five boxing wizards jump quickly.",
+                "Big fjords vex quick waltz glyphs."
+            ];
+
+            let gameText;
+            let gameActive = false;
+            let startTime;
+            let botRacers = [];
+            let playerLastWPM = localStorage.getItem('lastWPM') || 0;
+
+            const player = {
+                progress: 0,
+                correctChars: 0,
+                totalChars: 0,
+                mistakes: 0,
+                element: document.createElement('div')
+            };
+
+            function setupRacers() {
+                raceTrack.innerHTML = '';
+
+                player.element.className = 'racer player';
+                player.element.textContent = 'YOU';
+                raceTrack.appendChild(player.element);
+
+                const botProfiles = getBotProfilesByDifficulty(playerLastWPM);
+                botRacers = botProfiles.map((profile, index) => {
+                    profile.progress = 0;
+                    profile.element.className = `racer bot-${index + 1}`;
+                    profile.element.textContent = profile.name;
+                    raceTrack.appendChild(profile.element);
+                    return profile;
+                });
+            }
+
+            function getBotProfilesByDifficulty(playerWPM) {
+                if (playerWPM <= 30) {
+                    return [
+                        { name: "BOT 1", wpm: 25, accuracy: 0.90, element: document.createElement('div') },
+                        { name: "BOT 2", wpm: 30, accuracy: 0.92, element: document.createElement('div') },
+                        { name: "BOT 3", wpm: 35, accuracy: 0.94, element: document.createElement('div') }
+                    ];
+                } else if (playerWPM > 30 && playerWPM <= 50) {
+                    return [
+                        { name: "BOT 1", wpm: 45, accuracy: 0.95, element: document.createElement('div') },
+                        { name: "BOT 2", wpm: 50, accuracy: 0.97, element: document.createElement('div') },
+                        { name: "BOT 3", wpm: 55, accuracy: 0.96, element: document.createElement('div') }
+                    ];
+                } else {
+                    return [
+                        { name: "BOT 1", wpm: 65, accuracy: 0.98, element: document.createElement('div') },
+                        { name: "BOT 2", wpm: 80, accuracy: 0.99, element: document.createElement('div') },
+                        { name: "BOT 3", wpm: 90, accuracy: 0.97, element: document.createElement('div') }
+                    ];
+                }
+            }
+
+            function createGameText() {
+                const randomIndex = Math.floor(Math.random() * sentences.length);
+                gameText = sentences[randomIndex];
+                gameTextEl.innerHTML = gameText.split('').map(char => `<span>${char}</span>`).join('');
+            }
+
+            function updateGameText(input) {
+                const textSpans = gameTextEl.querySelectorAll('span');
+                let correctCount = 0;
+
+                for (let i = 0; i < gameText.length; i++) {
+                    const charSpan = textSpans[i];
+                    const charTyped = input[i];
+
+                    if (charTyped == null) {
+                        charSpan.classList.remove('correct', 'incorrect');
+                    } else if (charTyped === gameText[i]) {
+                        charSpan.classList.add('correct');
+                        charSpan.classList.remove('incorrect');
+                        correctCount++;
+                    } else {
+                        charSpan.classList.add('incorrect');
+                        charSpan.classList.remove('correct');
+                    }
+                }
+                
+                player.correctChars = correctCount;
+                player.totalChars = input.length;
+            }
+
+            function calculateWPM() {
+                if (!startTime) return 0;
+                const elapsedTimeInMinutes = (Date.now() - startTime) / 60000;
+                const wordsTyped = (player.correctChars / 5);
+                return Math.round(wordsTyped / elapsedTimeInMinutes);
+            }
+
+            function calculateAccuracy() {
+                if (player.totalChars === 0) return 100;
+                return Math.round((player.correctChars / player.totalChars) * 100);
+            }
+
+            function updateRacers(progress) {
+                const raceWidth = raceTrack.clientWidth - player.element.clientWidth - 20;
+                const newPosition = (progress / gameText.length) * raceWidth;
+                return newPosition;
+            }
+
+            function updateBotProgress(bot, elapsed) {
+                const targetCharsPerMin = bot.wpm * 5;
+                const targetMsPerChar = (60 * 1000) / targetCharsPerMin;
+                const simulatedCharIndex = Math.floor(elapsed / targetMsPerChar);
+
+                if (simulatedCharIndex > bot.progress) {
+                    bot.progress = Math.min(simulatedCharIndex, gameText.length);
+                }
+            }
+
+            function gameLoop() {
+                if (!gameActive) return;
+
+                const elapsedTime = Date.now() - startTime;
+                
+                const wpm = calculateWPM();
+                const accuracy = calculateAccuracy();
+                wpmDisplay.textContent = wpm;
+                accuracyDisplay.textContent = `${accuracy}%`;
+                
+                const playerInput = typingInput.value;
+                player.element.style.transform = `translateX(${updateRacers(playerInput.length)}px)`;
+
+                botRacers.forEach(bot => {
+                    updateBotProgress(bot, elapsedTime);
+                    bot.element.style.transform = `translateX(${updateRacers(bot.progress)}px)`;
+                });
+
+                if (playerInput.length >= gameText.length) {
+                    endGame(wpm, accuracy, 'player');
+                } else {
+                    botRacers.forEach(bot => {
+                        if (bot.progress >= gameText.length) {
+                            endGame(wpm, accuracy, 'bot', bot.name);
+                        }
+                    });
+                }
+
+                if (gameActive) {
+                    requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function endGame(finalWPM, finalAccuracy, winner, botName) {
+                gameActive = false;
+                typingInput.disabled = true;
+                localStorage.setItem('lastWPM', finalWPM);
+
+                if (winner === 'player') {
+                    alert(`You won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
+                } else {
+                    alert(`${botName} won! Your WPM was ${finalWPM} with ${finalAccuracy}% accuracy.`);
+                }
+                
+                gameContainer.dataset.mode = 'idle';
+            }
+
+            function startRace() {
+                if (gameActive) return;
+                gameContainer.dataset.mode = 'playing';
+                gameActive = true;
+                startTime = Date.now();
+                typingInput.value = '';
+                typingInput.disabled = false;
+                typingInput.focus();
+
+                createGameText();
+                setupRacers();
+
+                player.progress = 0;
+                player.correctChars = 0;
+                player.totalChars = 0;
+                wpmDisplay.textContent = '0';
+                accuracyDisplay.textContent = '100%';
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            startBtn.addEventListener('click', startRace);
+            typingInput.addEventListener('input', (event) => {
+                if (!gameActive) return;
+                updateGameText(event.target.value);
+            });
+        });
+    </script>
 </body>
 </html>
