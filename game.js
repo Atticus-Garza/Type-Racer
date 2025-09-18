@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keyboard shortcut for admin panel
     document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.shiftKey && e.key === '.') {
+        if (e.ctrlKey && e.shiftKey && e.key === 'o') {
             const password = prompt('Enter admin password:');
             if (password === 'Wampus') {
                 window.open('admin.html', '_blank', 'width=800,height=600');
