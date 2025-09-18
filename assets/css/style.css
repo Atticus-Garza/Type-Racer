@@ -1,20 +1,143 @@
+:root {
+    --track-color: #333;
+    --racer-size: 30px;
+    --player-color: #4CAF50;
+    --bot-color: #f44336;
+    --text-color: #fff;
+    --correct-text-color: #81C784;
+    --incorrect-text-color: #E57373;
+}
+
 body {
-    margin: 0;
-    padding: 0;
-    background-color: #333;
+    font-family: Arial, sans-serif;
+    background-color: #222;
+    color: var(--text-color);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    font-family: sans-serif;
-    color: white;
+    min-height: 100vh;
+    margin: 0;
 }
 
 .game-container {
-    border: 2px solid #555;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 800px;
+    background-color: #444;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
-canvas {
-    background-color: #111;
+h1 {
+    color: var(--player-color);
+}
+
+#start-btn {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background-color: var(--player-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.race-track {
+    width: 100%;
+    height: 150px;
+    background-color: var(--track-color);
+    border-radius: 10px;
+    position: relative;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.racer {
+    width: var(--racer-size);
+    height: var(--racer-size);
+    border-radius: 5px;
+    position: absolute;
+    left: 10px;
+    transition: transform 0.1s linear;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.racer.player {
+    background-color: var(--player-color);
+    color: var(--track-color);
+    top: 10px;
+}
+
+.racer.bot-1 {
+    background-color: var(--bot-color);
+    color: white;
+    top: 50px;
+}
+
+.racer.bot-2 {
+    background-color: #FFC107;
+    color: white;
+    top: 90px;
+}
+
+.racer.bot-3 {
+    background-color: #2196F3;
+    color: white;
+    top: 130px;
+}
+
+.game-display {
+    margin-top: 20px;
+    text-align: left;
+}
+
+#game-text {
+    font-family: monospace;
+    font-size: 1.2rem;
+    padding: 10px;
+    background-color: #555;
+    border-radius: 5px;
+    min-height: 50px;
+}
+
+#game-text span {
+    transition: background-color 0.2s;
+}
+
+#game-text .correct {
+    color: var(--correct-text-color);
+}
+
+#game-text .incorrect {
+    color: var(--incorrect-text-color);
+    text-decoration: underline;
+}
+
+#typing-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+    background-color: #333;
+    color: white;
+}
+
+.status {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    font-size: 1.2rem;
+}
+
+.status p {
+    margin: 0;
 }
